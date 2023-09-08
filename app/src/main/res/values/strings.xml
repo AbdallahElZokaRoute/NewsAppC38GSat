@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">NewsAppC38GSat</string>
+    <string name="title_activity_splash">SplashActivity</string>
 </resources>
