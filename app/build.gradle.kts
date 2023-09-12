@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.route.newsappc38gsat"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.route.newsappc38gsat"
         minSdk = 23
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -62,6 +62,10 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
+    implementation("com.github.bumptech.glide:compose:1.0.0-alpha.5")
+    val nav_version = "2.7.2"
+
+    implementation("androidx.navigation:navigation-compose:$nav_version")
     /**
      * Serialization -> Kotlin -> Json
      * Deserialization -> Json -> Kotlin

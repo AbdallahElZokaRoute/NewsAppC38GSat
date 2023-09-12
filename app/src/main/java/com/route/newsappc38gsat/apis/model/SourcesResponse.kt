@@ -1,4 +1,4 @@
-package com.route.newsappc38gsat.apis
+package com.route.newsappc38gsat.apis.model
 
 import com.google.gson.annotations.SerializedName
 
