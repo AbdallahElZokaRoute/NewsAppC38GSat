@@ -1,4 +1,4 @@
-package com.route.newsappc38gsat.fragments
+package com.route.newsappc38gsat.fragments.drawer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

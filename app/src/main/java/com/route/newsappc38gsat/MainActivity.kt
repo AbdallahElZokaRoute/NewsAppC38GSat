@@ -4,10 +4,8 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -36,13 +34,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.route.newsappc38gsat.apis.model.SourcesItem
-import com.route.newsappc38gsat.fragments.CATEGORIES_ROUTE_NAME
-import com.route.newsappc38gsat.fragments.CategoriesFragment
-import com.route.newsappc38gsat.fragments.NEWS_ROUTE_NAME
-import com.route.newsappc38gsat.fragments.NewsFragment
-import com.route.newsappc38gsat.fragments.NewsNavigationDrawer
-import com.route.newsappc38gsat.fragments.NewsTabsItems
+import com.route.newsappc38gsat.fragments.categories.CATEGORIES_ROUTE_NAME
+import com.route.newsappc38gsat.fragments.categories.CategoriesFragment
+import com.route.newsappc38gsat.fragments.news.NEWS_ROUTE_NAME
+import com.route.newsappc38gsat.fragments.news.NewsFragment
+import com.route.newsappc38gsat.fragments.drawer.NewsNavigationDrawer
 import com.route.newsappc38gsat.ui.theme.NewsAppC38GSatTheme
 import kotlinx.coroutines.launch
 

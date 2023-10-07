@@ -1,7 +1,6 @@
-package com.route.newsappc38gsat.fragments
+package com.route.newsappc38gsat.fragments.news
 
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -30,33 +29,25 @@ import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.route.newsappc38gsat.Constants
 import com.route.newsappc38gsat.R
-import com.route.newsappc38gsat.apis.APIManager
 import com.route.newsappc38gsat.apis.model.ArticlesItem
-import com.route.newsappc38gsat.apis.model.NewsResponse
 import com.route.newsappc38gsat.apis.model.SourcesItem
-import com.route.newsappc38gsat.apis.model.SourcesResponse
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 val NEWS_ROUTE_NAME = "News"
 
+// ViewModel Reference
 @Composable
-fun NewsFragment(categoryId: String?) {
-    // State
-    val responseState = remember {
-        mutableStateOf(listOf<SourcesItem>())
-    }
-    val newsList = remember {
-        mutableStateOf(listOf<ArticlesItem>())
-    }
-    getNewsTabsFromAPI(responseState, categoryId)
+fun NewsFragment(
+    categoryId: String?,
+    viewModel: NewsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+
+    viewModel.getNewsTabsFromAPI(categoryId)
+    // Quality OF Code
     Column {
-        NewsTabsItems(sources = responseState.value, newsList = newsList)
+        NewsTabsItems(sources = viewModel.responseState.value)
         // News Lazy Column From API
-        NewsList(newsList = newsList)
+        NewsList(newsList = viewModel.newsList)
     }
 }
 
@@ -123,7 +114,7 @@ fun NewsPreview() {
 fun NewsTabsItems(
     sources: List<SourcesItem>?,
     modifier: Modifier = Modifier,
-    newsList: MutableState<List<ArticlesItem>>
+    viewModel: NewsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
 
     var selectedIndex by remember {
@@ -162,53 +153,12 @@ fun NewsTabsItems(
 
                     })
                 if (selectedIndex == index) {
-                    getNewsBySource(sourcesItem.id ?: "", newsList)
+                    viewModel.getNewsBySource(sourcesItem.id ?: "")
                 }
             }
         }
     }
 }
 
-fun getNewsTabsFromAPI(responseState: MutableState<List<SourcesItem>>, categoryId: String?) {
-    APIManager.getNewsServices().getNewsSources(Constants.API_KEY, categoryId)
-        // Runs on background Thread
-        .enqueue(object : Callback<SourcesResponse> {
-            override fun onResponse(
-                call: Call<SourcesResponse>,
-                response: Response<SourcesResponse>
-            ) {
-                Log.e("TAG", "${response.body()?.status}")
-                Log.e("TAG", "${response.body()?.sources}")
-                // Stateful View
-                val body = response.body()
-                responseState.value = body?.sources ?: listOf()
-            }
-
-            override fun onFailure(call: Call<SourcesResponse>, t: Throwable) {
-
-            }
 
 
-        })
-}
-
-fun getNewsBySource(sourceId: String, newsListState: MutableState<List<ArticlesItem>>) {
-    APIManager
-        .getNewsServices()
-        .getNewsBySource(Constants.API_KEY, sourceId)
-        .enqueue(object : Callback<NewsResponse> {
-            override fun onResponse(call: Call<NewsResponse>, response: Response<NewsResponse>) {
-                val body = response.body()
-                newsListState.value = body?.articles ?: listOf()
-
-            }
-
-            override fun onFailure(call: Call<NewsResponse>, t: Throwable) {
-
-
-            }
-
-
-        })
-
-}

@@ -63,6 +63,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
     implementation("com.github.bumptech.glide:compose:1.0.0-alpha.5")
+    implementation("androidx.compose.runtime:runtime:1.5.1")
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.1")
     val nav_version = "2.7.2"
 
     implementation("androidx.navigation:navigation-compose:$nav_version")

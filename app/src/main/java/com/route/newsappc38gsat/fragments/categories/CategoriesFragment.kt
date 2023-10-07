@@ -1,4 +1,4 @@
-package com.route.newsappc38gsat.fragments
+package com.route.newsappc38gsat.fragments.categories
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -27,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.route.newsappc38gsat.Constants
 import com.route.newsappc38gsat.R
 import com.route.newsappc38gsat.apis.model.Category
+import com.route.newsappc38gsat.fragments.news.NEWS_ROUTE_NAME
 
 val CATEGORIES_ROUTE_NAME = "categories"
 
@@ -48,11 +49,14 @@ fun CategoriesFragment(navHostController: NavHostController) {
 }
 
 @Composable
-fun CategoriesList(navHostController: NavHostController) {
+fun CategoriesList(
+    navHostController: NavHostController,
+    viewModel: CategoriesViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     LazyVerticalGrid(columns = GridCells.Fixed(2)) {
-        items(Constants.categories.size) {
+        items(viewModel.categories.size) {
             // Render single item
-            val category = Constants.categories.get(it)
+            val category = viewModel.categories.get(it)
             CategoryCard(category, it, navHostController)
         }
     }
