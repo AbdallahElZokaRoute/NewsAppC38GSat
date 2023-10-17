@@ -40,8 +40,10 @@ import com.route.newsappc38gsat.fragments.news.NEWS_ROUTE_NAME
 import com.route.newsappc38gsat.fragments.news.NewsFragment
 import com.route.newsappc38gsat.fragments.drawer.NewsNavigationDrawer
 import com.route.newsappc38gsat.ui.theme.NewsAppC38GSatTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
 

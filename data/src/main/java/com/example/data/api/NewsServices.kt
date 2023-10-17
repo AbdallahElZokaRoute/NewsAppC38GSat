@@ -1,8 +1,7 @@
-package com.route.newsappc38gsat.apis
+package com.example.data.api
 
-import com.route.newsappc38gsat.apis.model.NewsResponse
-import com.route.newsappc38gsat.apis.model.SourcesResponse
-import retrofit2.Call
+import com.example.data.api.model.NewsResponse
+import com.example.data.api.model.SourcesResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

@@ -1,106 +1,135 @@
 package com.route.newsappc38gsat.fragments.news
 
 import android.util.Log
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.route.newsappc38gsat.Constants
-import com.route.newsappc38gsat.apis.APIManager
-import com.route.newsappc38gsat.apis.model.ArticlesItem
-import com.route.newsappc38gsat.apis.model.NewsResponse
-import com.route.newsappc38gsat.apis.model.SourcesItem
-import com.route.newsappc38gsat.apis.model.SourcesResponse
+import com.example.domain.entity.SourcesItemDTO
+import com.example.domain.repos.news.NewsRepository
+import com.example.domain.repos.sources.SourcesRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.lang.Exception
+import javax.inject.Inject
 
 // Lifecycle Aware
-class NewsViewModel : ViewModel() {
+@HiltViewModel
+class NewsViewModel @Inject constructor(
+    private val newsRepository: NewsRepository,
+    private val sourcesRepository: SourcesRepository,
+) : ViewModel() {
+    // MVI (Add-On UI Architecture Pattern)
+    // Model-View-Intent()
+
+
     // State
-    val responseState = mutableStateOf(listOf<SourcesItem>())
-    val newsList = mutableStateOf(listOf<ArticlesItem>())
-    val newsList2 = MutableLiveData<List<ArticlesItem>>()
-    val messageState = mutableStateOf("")
-    fun getNewsBySource(sourceId: String) {
+    val states = mutableStateOf<NewsViewStates>(value = NewsViewStates.Idle)
+    val sourcesState = mutableStateOf<List<SourcesItemDTO>>(listOf())
+    val eventsChannel = Channel<NewsViewEvents>(Channel.UNLIMITED)
+    val selectedIndex = mutableIntStateOf(0)
+
+    init {
+        processNewsEventsClicks()
+    }
+
+    /***
+     *  *  Activity :-
+     *       1 - Send Events To View Model
+     *       2- Render States
+     *  ViewModel :-
+     *      1- Process Events
+     *      2- Reduce States
+     */
+    fun processNewsEventsClicks() {
+        Log.e("TAG", "Hello world")
+        viewModelScope.launch {
+            eventsChannel.consumeAsFlow().collect {
+                when (it) {
+                    is NewsViewEvents.Idle -> {
+                    }
+
+                    is NewsViewEvents.ClickedOnNewsItem -> {
+                        // navigate to news Details Screen
+                    }
+
+                    is NewsViewEvents.SelectTabEvent -> {
+                        // getNewsBySource ->
+                        Log.e("TAG", "YES I CALLED BLOCK")
+                        getNewsBySource(it.sourceId)
+
+                    }
+
+                    is NewsViewEvents.EnteredNewsScreen -> {
+                        getNewsTabsFromAPI(categoryId = it.category) { sourceId ->
+                            getNewsBySource(sourceId = sourceId)
+                        }
+
+                    }
+                }
+
+            }
+
+        }
+
+    }
+    // Reduce States
+    // High level Modules :-
+//        - View Model
+    // News Repository :-
+//            Offline Data Source
+//            Online Data Source
+//            Network Handler
+    // Dependency Injection :- is Application of Dependency inversion Principle
+    // SOLI'D' :-  Dependency inversion
+    // Dagger (Hilt)
+    // Dependency Injection Library
+
+    private fun getNewsBySource(sourceId: String) {
         /**
          *
          * Parallelism
          *         // new Thread
          */
         // Concurrency
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = APIManager
-                    .getNewsServices()
-                    .getNewsBySource(Constants.API_KEY, sourceId)
+                states.value = NewsViewStates.Loading
+                val result = newsRepository.getNewsData(sourceId)
+                states.value =
+                    NewsViewStates.LoadedSources(
+                        newsList = result,
+                        sources = sourcesState.value
+                    )
                 withContext(Dispatchers.Main) {
-                    newsList.value = result.articles ?: listOf()
+//                    newsList.value = result ?: listOf()
                 }
             } catch (ex: Exception) {
                 Log.e("Tag", "${ex.message}")
+                states.value = NewsViewStates.Error(ex.message ?: "")
             }
         }
-//            .enqueue(object : Callback<NewsResponse> {
-//                override fun onResponse(
-//                    call: Call<NewsResponse>,
-//                    response: Response<NewsResponse>
-//                ) {
-//                    val body = response.body()
-//                    newsList.value = body?.articles ?: listOf()
-//
-//                }
-//
-//                override fun onFailure(call: Call<NewsResponse>, t: Throwable) {
-//
-//
-//                }
-
-//    })
-        val result = add(30, 45)
     }
 
-    fun add(num1: Int, num2: Int): Int {
-        return num1 + num2
-    }
-
-    fun getNewsTabsFromAPI(categoryId: String?) {
-
+    private fun getNewsTabsFromAPI(categoryId: String?, onResponse: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val response =
-                    APIManager.getNewsServices().getNewsSources(Constants.API_KEY, categoryId)
-                responseState.value = response.sources ?: listOf()
+                    sourcesRepository.getSourcesData(categoryId ?: "")
+                if (response.isNotEmpty())
+                    onResponse(response.get(0).id)
+                sourcesState.value = response
+                states.value =
+                    NewsViewStates.LoadedSources(sources = response, listOf())
             } catch (ex: Exception) {
                 Log.e("Tag", "${ex.message}")
-                messageState.value = ex.message ?: "Error Occurred"
+                states.value = NewsViewStates.Error(ex.message ?: "")
             }
         }
-
-        // Runs on background Thread
-//            .enqueue(object : Callback<SourcesResponse> {
-//                override fun onResponse(
-//                    call: Call<SourcesResponse>,
-//                    response: Response<SourcesResponse>
-//                ) {
-//                    Log.e("TAG", "${response.body()?.status}")
-//                    Log.e("TAG", "${response.body()?.sources}")
-//                    // Stateful View
-//                    val body = response.body()
-//                    responseState.value = body?.sources ?: listOf()
-//                }
-//
-//                override fun onFailure(call: Call<SourcesResponse>, t: Throwable) {
-//
-//                }
-//
-//
-//            })
     }
 }

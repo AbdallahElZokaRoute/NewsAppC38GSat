@@ -1,5 +1,7 @@
-package com.route.newsappc38gsat.apis.model
+package com.example.data.api.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
 data class NewsResponse(
@@ -23,7 +25,10 @@ data class Source(
     val id: String? = null
 )
 
+@Entity
 data class ArticlesItem(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int? = null,
 
     @field:SerializedName("publishedAt")
     val publishedAt: String? = null,
@@ -37,8 +42,8 @@ data class ArticlesItem(
     @field:SerializedName("description")
     val description: String? = null,
 
-    @field:SerializedName("source")
-    val source: Source? = null,
+//    @field:SerializedName("source")
+//    val source: Source? = null,
 
     @field:SerializedName("title")
     val title: String? = null,

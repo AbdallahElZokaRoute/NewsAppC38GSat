@@ -1,22 +1,29 @@
 package com.route.newsappc38gsat.fragments.news
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,35 +34,88 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.domain.entity.ArticlesItemDTO
+import com.example.domain.entity.SourcesItemDTO
 import com.route.newsappc38gsat.R
-import com.route.newsappc38gsat.apis.model.ArticlesItem
-import com.route.newsappc38gsat.apis.model.SourcesItem
+import kotlinx.coroutines.launch
 
 val NEWS_ROUTE_NAME = "News"
 
 // ViewModel Reference
 @Composable
-fun NewsFragment(
-    categoryId: String?,
-    viewModel: NewsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-) {
+fun Render(categoryId: String?, viewModel: NewsViewModel = hiltViewModel()) {
+    val state = viewModel.states.value
+    when (state) {
+        is NewsViewStates.Idle -> {
+            LaunchedEffect(key1 = true) {
+                viewModel.eventsChannel.send(NewsViewEvents.EnteredNewsScreen(categoryId ?: ""))
+            }
+        }
 
-    viewModel.getNewsTabsFromAPI(categoryId)
-    // Quality OF Code
-    Column {
-        NewsTabsItems(sources = viewModel.responseState.value)
-        // News Lazy Column From API
-        NewsList(newsList = viewModel.newsList)
+        is NewsViewStates.Loading -> {
+            LoadingCircularProgressIndicator()
+        }
+
+        is NewsViewStates.Error -> {
+            ErrorDialog(errorMessage = state.errorMessage)
+        }
+
+        is NewsViewStates.LoadedSources -> {
+            Column {
+                NewsTabsItems(sources = state.sources)
+                // News Lazy Column From API
+                NewsList(newsList = state.newsList ?: listOf())
+            }
+        }
     }
 }
 
 @Composable
-fun NewsList(newsList: MutableState<List<ArticlesItem>>) {
+fun ErrorDialog(viewModel: NewsViewModel = hiltViewModel(), errorMessage: String) {
+    val coroutineScope = rememberCoroutineScope()
+    AlertDialog(onDismissRequest = {}, confirmButton = {
+        Button(onClick = {
+            coroutineScope.launch {
+                viewModel.eventsChannel.send(NewsViewEvents.Idle)
+            }
+        }) {
+            Text(text = "OK")
+        }
+    }, title = {
+        Text(text = errorMessage)
+
+    })
+}
+
+@Composable
+fun LoadingCircularProgressIndicator() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(color = colorResource(id = R.color.colorGreen))
+    }
+}
+
+
+@Composable
+fun NewsFragment(
+    categoryId: String?,
+) {
+
+    // Quality OF Code
+    Render(categoryId = categoryId)
+}
+
+@Composable
+fun NewsList(newsList: List<ArticlesItemDTO>) {
     LazyColumn {
-        items(newsList.value.size) {
-            val articleItem = newsList.value.get(it)
+        items(newsList.size) {
+            val articleItem = newsList.get(it)
             NewsCard(articlesItem = articleItem)
         }
     }
@@ -63,7 +123,7 @@ fun NewsList(newsList: MutableState<List<ArticlesItem>>) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun NewsCard(articlesItem: ArticlesItem) {
+fun NewsCard(articlesItem: ArticlesItemDTO) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -101,8 +161,8 @@ fun NewsCard(articlesItem: ArticlesItem) {
 @Composable
 fun NewsPreview() {
     NewsCard(
-        articlesItem = ArticlesItem(
-            "Published At",
+        articlesItem = ArticlesItemDTO(
+            publishedAt = "Published At",
             author = "BBC News",
             description = LoremIpsum(35).toString(),
             title = "NEws Article Title"
@@ -112,28 +172,31 @@ fun NewsPreview() {
 
 @Composable
 fun NewsTabsItems(
-    sources: List<SourcesItem>?,
+    sources: List<SourcesItemDTO>?,
     modifier: Modifier = Modifier,
-    viewModel: NewsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: NewsViewModel = hiltViewModel()
 ) {
-
-    var selectedIndex by remember {
-        mutableStateOf(0)
-    }
+    val coroutineScope = rememberCoroutineScope()
 
     if (sources?.isNotEmpty() == true) {
-        ScrollableTabRow(selectedTabIndex = selectedIndex, containerColor = Color.Transparent,
+        ScrollableTabRow(selectedTabIndex = viewModel.selectedIndex.intValue,
+            containerColor = Color.Transparent,
             modifier = modifier,
             divider = {},
             indicator = {}) {
 
             sources.forEachIndexed { index, sourcesItem ->
                 Tab(
-                    selected = selectedIndex == index,
-                    onClick = { selectedIndex = index },
+                    selected = viewModel.selectedIndex.intValue == index,
+                    onClick = {
+                        viewModel.selectedIndex.intValue = index
+                        coroutineScope.launch {
+                            viewModel.eventsChannel.send(NewsViewEvents.SelectTabEvent(sourcesItem.id))
+                        }
+                    },
                     unselectedContentColor = colorResource(id = R.color.colorGreen),
                     selectedContentColor = Color.White,
-                    modifier = if (selectedIndex == index)
+                    modifier = if (viewModel.selectedIndex.intValue == index)
                         Modifier
                             .padding(end = 4.dp)
                             .background(
@@ -152,13 +215,9 @@ fun NewsTabsItems(
                         Text(text = sourcesItem.name ?: "")
 
                     })
-                if (selectedIndex == index) {
-                    viewModel.getNewsBySource(sourcesItem.id ?: "")
-                }
+
             }
         }
     }
 }
-
-
 
